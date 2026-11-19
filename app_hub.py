@@ -29,6 +29,11 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Asegurar siempre el directorio raíz al iniciar el script
 os.chdir(ROOT_DIR)
 
+# Enlaces oficiales de conversión (Skool y Stripe)
+URL_SKOOL = "https://www.skool.com"
+URL_STRIPE_VIP = "https://buy.stripe.com/7sY7sLeVL9YO5WO9ZMgfu00"
+URL_STRIPE_CORP = "https://buy.stripe.com/5kQ5kD7tj3Aqdpg2xkgfu01"
+
 # Función auxiliar para convertir imágenes a Base64 usando rutas absolutas
 def get_image_base64(filename):
     path = os.path.join(ROOT_DIR, filename)
@@ -49,8 +54,18 @@ def obtener_registro_sesiones():
 SESIONES_ACTIVAS = obtener_registro_sesiones()
 TIMEOUT_SESION_SEG = 1800  # 30 minutos de inactividad liberan el asiento automáticamente
 
+# Inicialización centralizada y temprana del estado de sesión
 if "session_token" not in st.session_state:
     st.session_state.session_token = str(uuid.uuid4())
+
+if "usuario_autenticado" not in st.session_state:
+    st.session_state.usuario_autenticado = None
+
+if "modo_demo" not in st.session_state:
+    st.session_state.modo_demo = False
+
+if "calculadora_activa" not in st.session_state:
+    st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
 
 def limpiar_sesiones_expiradas(correo):
     ahora = time.time()
@@ -77,6 +92,25 @@ def liberar_sesion_actual():
     token = st.session_state.get("session_token")
     if usuario and usuario["correo"] in SESIONES_ACTIVAS:
         SESIONES_ACTIVAS[usuario["correo"]].pop(token, None)
+
+def limpiar_estado_demo():
+    for k in ["demo_calcular", "demo_resultado"]:
+        if k in st.session_state:
+            del st.session_state[k]
+
+def limpiar_estado_calculadora():
+    """Limpia las variables de sesión para evitar conflictos de datos entre diferentes módulos."""
+    keys_to_remove = ["calcular", "resultado_activo"]
+    for k in keys_to_remove:
+        if k in st.session_state:
+            del st.session_state[k]
+
+def render_enlaces_conversion_sidebar():
+    st.sidebar.divider()
+    st.sidebar.markdown("### 🚀 Planes y Suscripciones")
+    st.sidebar.link_button("🎓 Planes Base en Skool", URL_SKOOL, use_container_width=True)
+    st.sidebar.link_button("⭐ Suscripción Plan VIP (Stripe)", URL_STRIPE_VIP, use_container_width=True)
+    st.sidebar.link_button("🏢 Plan Corporativo (Stripe)", URL_STRIPE_CORP, use_container_width=True)
 
 # -------------------------------------------------------------
 # LECTURA Y VALIDACIÓN CONTRA EXCEL MAESTRO (usuarios_hub.xlsx)
@@ -153,11 +187,42 @@ def validar_credenciales_excel(correo_ingresado, contrasena_ingresada):
     return True, "Acceso concedido", datos_usuario
 
 # -------------------------------------------------------------
-# CONTROL DE INICIO DE SESIÓN OBLIGATORIO
+# VISTA DEMO GRATUITA (SIN REGISTRO PREVIO)
 # -------------------------------------------------------------
-if "usuario_autenticado" not in st.session_state:
-    st.session_state.usuario_autenticado = None
+if st.session_state.usuario_autenticado is None and st.session_state.modo_demo:
+    ruta_demo_dir = os.path.join(ROOT_DIR, "modulos", "00Demo")
+    ruta_demo_script = os.path.join(ruta_demo_dir, "app_demo.py")
 
+    if os.path.exists(ruta_demo_script):
+        os.chdir(ruta_demo_dir)
+        with open(ruta_demo_script, "r", encoding="utf-8") as f:
+            codigo_demo = f.read()
+
+        try:
+            exec(codigo_demo, {"__name__": "__main__", "__file__": ruta_demo_script})
+        finally:
+            os.chdir(ROOT_DIR)
+
+        render_enlaces_conversion_sidebar()
+
+        st.sidebar.markdown("<br>", unsafe_allow_html=True)
+        if st.sidebar.button("⬅️ Regresar al Hub Principal (Login)", use_container_width=True, type="primary"):
+            limpiar_estado_demo()
+            st.session_state.modo_demo = False
+            os.chdir(ROOT_DIR)
+            st.rerun()
+    else:
+        os.chdir(ROOT_DIR)
+        st.error(f"⚠️ No se encontró el archivo del Demo en: `{ruta_demo_script}`.")
+        if st.button("⬅️ Regresar al Hub Principal (Login)"):
+            st.session_state.modo_demo = False
+            st.rerun()
+
+    st.stop()
+
+# -------------------------------------------------------------
+# CONTROL DE INICIO DE SESIÓN OBLIGATORIO (PANTALLA DE CAPTURA)
+# -------------------------------------------------------------
 if st.session_state.usuario_autenticado is None:
     logo_b64 = get_image_base64("00. Logo Georgeley.png")
     avatar_b64 = get_image_base64("Georgeley AV01.png")
@@ -192,8 +257,15 @@ if st.session_state.usuario_autenticado is None:
                             "Cierra sesión en otro equipo o espera unos minutos."
                         )
                     else:
+                        st.session_state.modo_demo = False
                         st.session_state.usuario_autenticado = datos_usr
                         st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🧪 Explorar Demo Gratuito (Sin Registro)", use_container_width=True):
+            limpiar_estado_demo()
+            st.session_state.modo_demo = True
+            st.rerun()
 
         if avatar_b64:
             st.markdown(f"""
@@ -201,7 +273,17 @@ if st.session_state.usuario_autenticado is None:
                 <img src="data:image/png;base64,{avatar_b64}" width="130">
             </div>
             """, unsafe_allow_html=True)
-        st.info("💡 ¿Aún no tienes licencia activa? Adquiere tu suscripción anual en nuestra comunidad oficial de **Skool**.")
+
+        st.info("💡 ¿Aún no tienes licencia activa? Prueba el **Demo** o adquiere tu acceso en **Skool** o **Stripe**.")
+
+        col_s1, col_s2, col_s3 = st.columns(3)
+        with col_s1:
+            st.link_button("🎓 Skool (Base)", URL_SKOOL, use_container_width=True)
+        with col_s2:
+            st.link_button("⭐ Plan VIP", URL_STRIPE_VIP, use_container_width=True)
+        with col_s3:
+            st.link_button("🏢 Corporativo", URL_STRIPE_CORP, use_container_width=True)
+
     st.stop()
 
 # Renovar marca de tiempo de sesión activa en cada interacción
@@ -218,9 +300,6 @@ permisos_usuario = usuario_actual["permisos"]
 # -------------------------------------------------------------
 # CONTROL DE ESTADO DE NAVEGACIÓN Y LIMPIEZA (INTACTO)
 # -------------------------------------------------------------
-if "calculadora_activa" not in st.session_state:
-    st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
-
 # Mapa completo de calculadoras + llave de permiso asociada
 catalogo_completo = {
     "📊 Selecciona una calculadora...": (None, None, True),
@@ -248,20 +327,12 @@ calculadoras_disponibles = {
 if st.session_state.calculadora_activa not in calculadoras_disponibles:
     st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
 
-def limpiar_estado_calculadora():
-    """Limpia las variables de sesión para evitar conflictos de datos entre diferentes módulos."""
-    keys_to_remove = ["calcular", "resultado_activo"]
-    for k in keys_to_remove:
-        if k in st.session_state:
-            del st.session_state[k]
-
 # -------------------------------------------------------------
 # BARRA LATERAL DINÁMICA SEGÚN EL ESTADO (ORDEN VERIFICADO)
 # -------------------------------------------------------------
 if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
     # --- VISTA DEL HUB PRINCIPAL (ORDEN: Logo -> Texto -> Avatar AV01 -> Navegación) ---
-    
-    # 01. Logo Georgeley centrado (Ruta absoluta blindada)
+
     logo_b64 = get_image_base64("00. Logo Georgeley.png")
     if logo_b64:
         st.sidebar.markdown(f"""
@@ -272,7 +343,6 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
     else:
         st.sidebar.markdown("<h3 style='text-align: center;'>🏢 <b>GEORGELEY</b></h3>", unsafe_allow_html=True)
 
-    # 02. Globo de diálogo (Texto de bienvenida)
     st.sidebar.markdown("""
     <div style="
         position: relative;
@@ -303,7 +373,6 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
     </div>
     """, unsafe_allow_html=True)
 
-    # 03. Avatar exclusivo del Hub (Georgeley AV01.png) centrado y blindado
     avatar_b64 = get_image_base64("Georgeley AV01.png")
     if avatar_b64:
         st.sidebar.markdown(f"""
@@ -313,12 +382,10 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
         """, unsafe_allow_html=True)
 
     st.sidebar.divider()
-    
-    # 04. Apartado de Navegación del Hub (Selector)
     st.sidebar.markdown("### 🎛️ Navegación del Hub")
 
     seleccion_menu = st.sidebar.selectbox(
-        "Selecciona un módulo:", 
+        "Selecciona un módulo:",
         list(calculadoras_disponibles.keys()),
         index=list(calculadoras_disponibles.keys()).index(st.session_state.calculadora_activa)
     )
@@ -328,7 +395,6 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
         st.session_state.calculadora_activa = seleccion_menu
         st.rerun()
 
-    # Tarjeta compacta de estado de licencia y botón cerrar sesión
     st.sidebar.divider()
     etiqueta_lci = "✅ LCI Regionales Activo" if permisos_usuario["lci"] else "🔒 LCI: Solo CDMX (1.00)"
     st.sidebar.caption(
@@ -347,7 +413,6 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
 # RENDERIZADO PRINCIPAL (HUB O MÓDULO ACTIVO)
 # -------------------------------------------------------------
 if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
-    # Pantalla Principal del Hub
     col_title, col_ver = st.columns([4, 1])
     with col_title:
         st.title("🚀 Hub Central: Ecosistema de Ingeniería de Costos")
@@ -372,26 +437,26 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
     with col1:
         st.markdown(f"""
         #### 🏢 Edificación Vertical
-        * {marca_estado("🏢 01. Departamentos")} Departamentos
-        * {marca_estado("🏢 10. Oficinas y Corporativos")} Oficinas y Corporativos
-        * {marca_estado("🏨 08. Hoteles y Hospedaje")} Hoteles y Hospedaje
-        * {marca_estado("🏥 07. Hospitales y Salud")} Hospitales y Salud
+- {marca_estado("🏢 01. Departamentos")} Departamentos
+- {marca_estado("🏢 10. Oficinas y Corporativos")} Oficinas y Corporativos
+- {marca_estado("🏨 08. Hoteles y Hospedaje")} Hoteles y Hospedaje
+- {marca_estado("🏥 07. Hospitales y Salud")} Hospitales y Salud
         """)
     with col2:
         st.markdown(f"""
         #### 🏛️ Espacios Públicos y Sociales
-        * {marca_estado("🛒 03. Comercios y Locales")} Comercios y Locales
-        * {marca_estado("🏫 06. Escuelas y Educación")} Escuelas y Educación
-        * {marca_estado("🏛️ 04. Culturales")} Culturales y Recreativos
-        * {marca_estado("⚽ 05. Deportivos")} Deportivos
-        * {marca_estado("🏭 02. Bodegas y Naves")} Bodegas y Naves Industriales
+- {marca_estado("🛒 03. Comercios y Locales")} Comercios y Locales
+- {marca_estado("🏫 06. Escuelas y Educación")} Escuelas y Educación
+- {marca_estado("🏛️ 04. Culturales")} Culturales y Recreativos
+- {marca_estado("⚽ 05. Deportivos")} Deportivos
+- {marca_estado("🏭 02. Bodegas y Naves")} Bodegas y Naves Industriales
         """)
     with col3:
         st.markdown(f"""
         #### 🛣️ Infraestructura y Vivienda
-        * {marca_estado("🏠 12. Vivienda Habitacional")} Vivienda Habitacional
-        * {marca_estado("🏗️ 11. Urbanización y Obras")} Urbanización y Loteos
-        * {marca_estado("🛣️ 09. Infraestructura Vial")} Infraestructura Vial
+- {marca_estado("🏠 12. Vivienda Habitacional")} Vivienda Habitacional
+- {marca_estado("🏗️ 11. Urbanización y Obras")} Urbanización y Loteos
+- {marca_estado("🛣️ 09. Infraestructura Vial")} Infraestructura Vial
         """)
 
     if not permisos_usuario["lci"]:
@@ -404,13 +469,12 @@ else:
     carpeta, archivo = calculadoras_disponibles[st.session_state.calculadora_activa]
     ruta_modulo_dir = os.path.join(ROOT_DIR, "modulos", carpeta)
     ruta_script = os.path.join(ruta_modulo_dir, archivo)
-    
+
     if os.path.exists(ruta_script):
         os.chdir(ruta_modulo_dir)
         with open(archivo, "r", encoding="utf-8") as f:
             codigo_modulo = f.read()
 
-        # Si el usuario NO tiene LCI activo, restringimos selectbox de ciudades/LCI a Ciudad de México (1.0)
         selectbox_original = st.selectbox
         sidebar_selectbox_original = st.sidebar.selectbox
 
@@ -438,17 +502,16 @@ else:
             st.sidebar.selectbox = crear_selectbox_restringido(sidebar_selectbox_original)
 
         try:
-            exec(codigo_modulo, {'__name__': '__main__', '__file__': ruta_script})
+            exec(codigo_modulo, {"__name__": "__main__", "__file__": ruta_script})
         finally:
             st.selectbox = selectbox_original
             st.sidebar.selectbox = sidebar_selectbox_original
-        
-        # --- CONTROL DE NAVEGACIÓN UBICADO AL FINAL DE LA BARRA LATERAL ---
+
         st.sidebar.divider()
         st.sidebar.markdown("### 🎛️ Control de Navegación")
 
         seleccion_menu = st.sidebar.selectbox(
-            "Cambiar de módulo:", 
+            "Cambiar de módulo:",
             list(calculadoras_disponibles.keys()),
             index=list(calculadoras_disponibles.keys()).index(st.session_state.calculadora_activa)
         )
