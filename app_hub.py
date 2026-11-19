@@ -13,7 +13,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS para fijar el ancho óptimo de la barra lateral, tarjetas y botones Stripe
+# Estilo CSS para fijar el ancho óptimo de la barra lateral, tarjetas, botones Stripe y marca de agua
 st.markdown("""
 <style>
     [data-testid="stSidebar"] {
@@ -113,6 +113,16 @@ st.markdown("""
     div[data-testid="stLinkButton"] > a *,
     div[data-testid="stLinkButton"] a * {
         color: #FFFFFF !important;
+    }
+
+    /* Elevar marca de agua fija en esquina inferior derecha para evitar encimarse con Manage app */
+    [class*="watermark"],
+    [class*="marca-agua"],
+    [id*="watermark"],
+    [id*="marca-agua"] {
+        bottom: 62px !important;
+        right: 24px !important;
+        z-index: 40 !important;
     }
 </style>
 """, unsafe_allow_html=True)
