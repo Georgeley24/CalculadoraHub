@@ -13,10 +13,20 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS responsivo para escritorio, tablets y celulares (vertical y horizontal)
+# Estilo CSS responsivo conservando siempre accesible el controlador del panel lateral
 st.markdown("""
 <style>
-    /* Ancho de barra lateral solo en pantallas amplias (escritorio / laptop) */
+    /* Mantener siempre visible y accesible el botón para abrir/ocultar la barra lateral */
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarHeader"] button {
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1000002 !important;
+        pointer-events: auto !important;
+    }
+
+    /* Ancho de barra lateral solo en pantallas amplias de escritorio */
     @media (min-width: 1025px) and (min-height: 551px) {
         [data-testid="stSidebar"] {
             min-width: 350px !important;
@@ -26,46 +36,19 @@ st.markdown("""
 
     /* Celulares y tablets (vertical y rotado en horizontal) */
     @media (max-width: 1024px), (max-height: 550px) and (orientation: landscape) {
-        [data-testid="stAppViewContainer"] {
-            flex-direction: row !important;
-            overflow-x: hidden !important;
-        }
         [data-testid="stSidebar"] {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            width: 82vw !important;
             min-width: 0 !important;
-            max-width: 340px !important;
-            z-index: 999 !important;
-            overflow-y: auto !important;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.55) !important;
+            max-width: 78vw !important;
         }
         [data-testid="stSidebar"][aria-expanded="false"] {
-            width: 0 !important;
             min-width: 0 !important;
             max-width: 0 !important;
-            transform: translateX(-100%) !important;
-            pointer-events: none !important;
-        }
-        section.main,
-        [data-testid="stMain"],
-        [data-testid="stAppViewContainer"] > section {
-            width: 100% !important;
-            min-width: 100% !important;
-            max-width: 100% !important;
-            margin-left: 0 !important;
-            padding-left: 0 !important;
-            overflow-x: hidden !important;
         }
         .main .block-container,
-        [data-testid="stMainBlockContainer"],
-        [data-testid="stAppViewBlockContainer"] {
+        [data-testid="stMainBlockContainer"] {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
-            padding-top: 1rem !important;
-            width: 100% !important;
+            padding-top: 2.5rem !important;
             max-width: 100% !important;
         }
         h1 {
