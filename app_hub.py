@@ -13,13 +13,41 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS para fijar el ancho óptimo de la barra lateral, tarjetas, botones Stripe y marca de agua
+# Estilo CSS responsivo para escritorio, tablets y celulares
 st.markdown("""
 <style>
-    [data-testid="stSidebar"] {
-        min-width: 350px !important;
-        max-width: 380px !important;
+    /* Ancho de barra lateral solo en pantallas amplias (escritorio) */
+    @media (min-width: 769px) {
+        [data-testid="stSidebar"] {
+            min-width: 350px !important;
+            max-width: 380px !important;
+        }
     }
+
+    /* Ajustes para celular y pantalla pequeña */
+    @media (max-width: 768px) {
+        [data-testid="stSidebar"] {
+            min-width: 0 !important;
+            max-width: 88vw !important;
+            width: 88vw !important;
+        }
+        .main .block-container,
+        [data-testid="stMainBlockContainer"] {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-top: 1.2rem !important;
+            max-width: 100% !important;
+        }
+        h1 {
+            font-size: 1.55rem !important;
+            line-height: 1.25 !important;
+            word-wrap: break-word !important;
+        }
+        h2 {
+            font-size: 1.3rem !important;
+        }
+    }
+
     .plan-card-wide {
         background: #181824;
         border: 1px solid #2e2e42;
