@@ -13,38 +13,44 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS responsivo para escritorio, tablets y celulares
+# Estilo CSS responsivo para escritorio, tablets y celulares (vertical y horizontal)
 st.markdown("""
 <style>
-    /* Ancho de barra lateral solo en pantallas amplias (escritorio) */
-    @media (min-width: 769px) {
+    /* Ancho de barra lateral solo en pantallas amplias (escritorio / laptop) */
+    @media (min-width: 1025px) {
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 380px !important;
         }
     }
 
-    /* Ajustes para celular y pantalla pequeña */
-    @media (max-width: 768px) {
+    /* Ajustes para celular y tablet (vertical y rotado en horizontal) */
+    @media (max-width: 1024px), (max-height: 520px) and (orientation: landscape) {
         [data-testid="stSidebar"] {
             min-width: 0 !important;
-            max-width: 88vw !important;
-            width: 88vw !important;
+            max-width: 85vw !important;
+        }
+        [data-testid="stSidebar"][aria-expanded="false"] {
+            width: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
         }
         .main .block-container,
-        [data-testid="stMainBlockContainer"] {
+        [data-testid="stMainBlockContainer"],
+        [data-testid="stAppViewBlockContainer"] {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
-            padding-top: 1.2rem !important;
+            padding-top: 1rem !important;
             max-width: 100% !important;
+            overflow-x: hidden !important;
         }
         h1 {
-            font-size: 1.55rem !important;
+            font-size: 1.5rem !important;
             line-height: 1.25 !important;
             word-wrap: break-word !important;
         }
         h2 {
-            font-size: 1.3rem !important;
+            font-size: 1.25rem !important;
         }
     }
 
