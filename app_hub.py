@@ -13,12 +13,106 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS para fijar el ancho óptimo de la barra lateral
+# Estilo CSS para fijar el ancho óptimo de la barra lateral, tarjetas y botones Stripe
 st.markdown("""
 <style>
     [data-testid="stSidebar"] {
         min-width: 350px !important;
         max-width: 380px !important;
+    }
+    .plan-card-wide {
+        background: #181824;
+        border: 1px solid #2e2e42;
+        border-radius: 14px;
+        padding: 20px 22px;
+        margin-bottom: 14px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+    .plan-badge {
+        display: inline-block;
+        background: rgba(59, 130, 246, 0.16);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .plan-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin: 0 0 4px 0;
+    }
+    .plan-price {
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: #fbbf24;
+        margin: 0 0 10px 0;
+    }
+    .plan-price span {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #94a3b8;
+    }
+    .plan-lead {
+        font-size: 0.88rem;
+        line-height: 1.45;
+        color: #cbd5e1;
+        margin: 0;
+        font-style: italic;
+    }
+    .plan-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.5;
+        color: #e2e8f0;
+    }
+    .plan-list li {
+        margin-bottom: 6px;
+    }
+    .demo-plan-list {
+        list-style: none;
+        padding: 0;
+        margin: 6px 0 10px 0;
+        font-size: 0.8rem;
+        line-height: 1.42;
+        color: #e2e8f0;
+    }
+    .demo-plan-list li {
+        margin-bottom: 4px;
+    }
+
+    /* Botones de enlace (st.link_button) armonizados con el globo de bienvenida (#2D2B42) */
+    div[data-testid="stLinkButton"] > a,
+    div[data-testid="stLinkButton"] a,
+    [data-testid="stExpander"] a[href*="buy.stripe.com"],
+    [data-testid="stSidebar"] a[href*="buy.stripe.com"] {
+        background-color: #2D2B42 !important;
+        background: #2D2B42 !important;
+        color: #FFFFFF !important;
+        border: 1.5px solid #4A476B !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        transition: background-color 0.2s ease, border-color 0.2s ease !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28) !important;
+    }
+    div[data-testid="stLinkButton"] > a:hover,
+    div[data-testid="stLinkButton"] a:hover,
+    [data-testid="stExpander"] a[href*="buy.stripe.com"]:hover,
+    [data-testid="stSidebar"] a[href*="buy.stripe.com"]:hover {
+        background-color: #393654 !important;
+        background: #393654 !important;
+        border-color: #6B6699 !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stLinkButton"] > a *,
+    div[data-testid="stLinkButton"] a * {
+        color: #FFFFFF !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -29,10 +123,90 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Asegurar siempre el directorio raíz al iniciar el script
 os.chdir(ROOT_DIR)
 
-# Enlaces oficiales de conversión (Skool y Stripe)
-URL_SKOOL = "https://www.skool.com"
-URL_STRIPE_VIP = "https://buy.stripe.com/7sY7sLeVL9YO5WO9ZMgfu00"
-URL_STRIPE_CORP = "https://buy.stripe.com/5kQ5kD7tj3Aqdpg2xkgfu01"
+# Catálogo comercial con Payment Links oficiales de Stripe
+PLANES_ECOSISTEMA = [
+    {
+        "id": "estandar",
+        "tag": "Plan Individual",
+        "nombre": "Estándar",
+        "precio": "$105.00 USD",
+        "periodo": "/año",
+        "enfoque": "Tu punto de partida ideal para presupuestar con criterio paramétrico en tu práctica diaria, con el respaldo de una comunidad activa y soporte continuo.",
+        "url": "https://buy.stripe.com/8x2aEXbJz3Aqad41tggfu02",
+        "cta": "Unirme a la experiencia Estándar",
+        "beneficios": [
+            "1 calculadora paramétrica a elegir (de las 7 disponibles) con vigencia anual",
+            "Bono incluido: Infraestructura Vial (2 tipologías)",
+            "Hasta 2 usuarios simultáneos (ideal para oficina y casa, o calculista y auxiliar)",
+            "LCI Regionales fijo en Ciudad de México (Factor 1.00)",
+            "Soporte técnico durante 365 días",
+        ],
+    },
+    {
+        "id": "premium",
+        "tag": "Plan Dúo",
+        "nombre": "Premium",
+        "precio": "$185.00 USD",
+        "periodo": "/año",
+        "enfoque": "Pensado para despachos pequeños o medianos que desean iniciar su experiencia con dos calculadoras nuevas o adicionales a su experiencia Estándar previamente contratada.",
+        "url": "https://buy.stripe.com/dRm8wP00Rdb070S6NAgfu03",
+        "cta": "Unirme a la experiencia Premium",
+        "beneficios": [
+            "2 calculadoras paramétricas a elegir con vigencia anual",
+            "Bono incluido: Infraestructura Vial (2 tipologías)",
+            "Hasta 2 usuarios simultáneos para trabajo individual o despacho pequeño",
+            "LCI Regionales fijo en Ciudad de México (Factor 1.00)",
+            "Soporte técnico durante 365 días",
+        ],
+    },
+    {
+        "id": "vip",
+        "tag": "Add-on LCI México",
+        "nombre": "VIP",
+        "precio": "$75.00 USD",
+        "periodo": "/año",
+        "enfoque": "Lleva tus estimaciones al contexto real de cualquier plaza del país, ajustando tus modelos a las condiciones regionales de México.",
+        "url": "https://buy.stripe.com/4gM7sL6pfgnc70Sgoagfu04",
+        "cta": "Sumar la experiencia VIP",
+        "beneficios": [
+            "Habilita el Índice de Contexto Local (LCI) en tus calculadoras activas",
+            "Factores LCI regionales activos para estados y ciudades de la República Mexicana",
+            "Requiere contar con al menos 1 calculadora activa (Plan Estándar o Premium)",
+            "Soporte técnico por 365 días",
+        ],
+    },
+    {
+        "id": "acceso_total",
+        "tag": "Suscripción Individual",
+        "nombre": "Acceso Total + LCI",
+        "precio": "$475.00 USD",
+        "periodo": "/año",
+        "enfoque": "La experiencia integral individual para trabajar sin límites de tipologías ni plazas, con todo el catálogo paramétrico y el contexto regional de México habilitado.",
+        "url": "https://buy.stripe.com/7sY7sLeVL9YO5WO9ZMgfu00",
+        "cta": "Unirme a la experiencia Acceso Total",
+        "beneficios": [
+            "Acceso a todas las calculadoras con vigencia anual",
+            "Índice de Contexto Local (LCI) habilitado para estados y ciudades de México",
+            "Hasta 2 usuarios simultáneos (suscripción individual)",
+            "Soporte técnico durante 365 días",
+        ],
+    },
+    {
+        "id": "corporativo",
+        "tag": "Licencia Multiusuario",
+        "nombre": "Corporativo",
+        "precio": "$940.00 USD",
+        "periodo": "/año",
+        "enfoque": "Diseñado para empresas constructoras, desarrolladoras o firmas de consultoría que buscan estandarizar presupuestos y operar en equipo con respaldo anual.",
+        "url": "https://buy.stripe.com/5kQ5kD7tj3Aqdpg2xkgfu01",
+        "cta": "Unirme a la experiencia Corporativa",
+        "beneficios": [
+            "Licencia multiusuario anual para equipos y proyectos múltiples",
+            "Cobertura corporativa para operación empresarial y consultoría",
+            "Acompañamiento y soporte técnico durante 365 días",
+        ],
+    },
+]
 
 # Función auxiliar para convertir imágenes a Base64 usando rutas absolutas
 def get_image_base64(filename):
@@ -105,12 +279,48 @@ def limpiar_estado_calculadora():
         if k in st.session_state:
             del st.session_state[k]
 
-def render_enlaces_conversion_sidebar():
+def render_tarjeta_plan_apilada(plan):
+    """Renderiza un paquete en formato ancho y apilado verticalmente."""
+    items_html = "".join([f"<li>✅ {b}</li>" for b in plan["beneficios"]])
+    with st.container(border=True):
+        col_info, col_detalles = st.columns([1.15, 1.85], gap="large")
+        with col_info:
+            st.markdown(
+                f"""
+                <div class="plan-badge">{plan["tag"]}</div>
+                <div class="plan-title">{plan["nombre"]}</div>
+                <div class="plan-price">{plan["precio"]}<span>{plan["periodo"]}</span></div>
+                <p class="plan-lead">{plan["enfoque"]}</p>
+                """,
+                unsafe_allow_html=True,
+            )
+        with col_detalles:
+            st.markdown(f"<ul class='plan-list'>{items_html}</ul>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.link_button(plan["cta"], plan["url"], use_container_width=True)
+
+def render_pasarela_desplegable_login():
+    """Muestra los 5 planes apilados verticalmente dentro de un expander a ancho completo."""
+    with st.expander("💎 Conoce los planes y experiencias de suscripción (Stripe)", expanded=False):
+        st.caption(
+            "Elige la modalidad que mejor se adapte a tu forma de presupuestar y crecer. "
+            "Al seleccionar una opción irás directamente a su checkout seguro en Stripe."
+        )
+        for plan in PLANES_ECOSISTEMA:
+            render_tarjeta_plan_apilada(plan)
+
+def render_planes_en_sidebar_demo():
+    """Descripción completa y beneficios de cada plan dentro del desplegable en la barra lateral del Demo."""
     st.sidebar.divider()
-    st.sidebar.markdown("### 🚀 Planes y Suscripciones")
-    st.sidebar.link_button("🎓 Planes Base en Skool", URL_SKOOL, use_container_width=True)
-    st.sidebar.link_button("⭐ Suscripción Plan VIP (Stripe)", URL_STRIPE_VIP, use_container_width=True)
-    st.sidebar.link_button("🏢 Plan Corporativo (Stripe)", URL_STRIPE_CORP, use_container_width=True)
+    with st.sidebar.expander("💎 Ver planes y unirme en Stripe", expanded=False):
+        for plan in PLANES_ECOSISTEMA:
+            precio_txt = f"{plan['precio']}{plan['periodo']}" if plan["periodo"] else plan["precio"]
+            items_html = "".join([f"<li>✅ {b}</li>" for b in plan["beneficios"]])
+            st.markdown(f"**{plan['nombre']}** — `{precio_txt}`")
+            st.caption(plan["enfoque"])
+            st.markdown(f"<ul class='demo-plan-list'>{items_html}</ul>", unsafe_allow_html=True)
+            st.link_button(plan["cta"], plan["url"], use_container_width=True)
+            st.markdown("---")
 
 # -------------------------------------------------------------
 # LECTURA Y VALIDACIÓN CONTRA EXCEL MAESTRO (usuarios_hub.xlsx)
@@ -150,7 +360,7 @@ def validar_credenciales_excel(correo_ingresado, contrasena_ingresada):
         return False, "Fecha de suscripción inválida en el registro. Contacta al administrador.", None
 
     if dias_restantes < 0:
-        return False, f"Tu suscripción anual venció el {fecha_venc.strftime('%Y-%m-%d')}. Renuévala en Skool para reactivar el acceso.", None
+        return False, f"Tu suscripción anual venció el {fecha_venc.strftime('%Y-%m-%d')}. Renuévala para reactivar el acceso.", None
 
     tipo_plan = str(registro.get("tipo_plan", "Individual")).strip()
     max_usuarios = 5 if tipo_plan.lower() == "corporativo" else 2
@@ -203,7 +413,7 @@ if st.session_state.usuario_autenticado is None and st.session_state.modo_demo:
         finally:
             os.chdir(ROOT_DIR)
 
-        render_enlaces_conversion_sidebar()
+        render_planes_en_sidebar_demo()
 
         st.sidebar.markdown("<br>", unsafe_allow_html=True)
         if st.sidebar.button("⬅️ Regresar al Hub Principal (Login)", use_container_width=True, type="primary"):
@@ -274,15 +484,12 @@ if st.session_state.usuario_autenticado is None:
             </div>
             """, unsafe_allow_html=True)
 
-        st.info("💡 ¿Aún no tienes licencia activa? Prueba el **Demo** o adquiere tu acceso en **Skool** o **Stripe**.")
+        st.info("💡 ¿Aún no tienes licencia activa? Prueba el **Demo** o despliega aquí abajo las opciones de suscripción.")
 
-        col_s1, col_s2, col_s3 = st.columns(3)
-        with col_s1:
-            st.link_button("🎓 Skool (Base)", URL_SKOOL, use_container_width=True)
-        with col_s2:
-            st.link_button("⭐ Plan VIP", URL_STRIPE_VIP, use_container_width=True)
-        with col_s3:
-            st.link_button("🏢 Corporativo", URL_STRIPE_CORP, use_container_width=True)
+    # Desplegable a ancho completo fuera de la columna central angosta
+    _, col_planes, _ = st.columns([0.4, 9.2, 0.4])
+    with col_planes:
+        render_pasarela_desplegable_login()
 
     st.stop()
 
@@ -300,7 +507,6 @@ permisos_usuario = usuario_actual["permisos"]
 # -------------------------------------------------------------
 # CONTROL DE ESTADO DE NAVEGACIÓN Y LIMPIEZA (INTACTO)
 # -------------------------------------------------------------
-# Mapa completo de calculadoras + llave de permiso asociada
 catalogo_completo = {
     "📊 Selecciona una calculadora...": (None, None, True),
     "🏢 01. Departamentos": ("01departamentos", "app_departamentos.py", permisos_usuario["depas"]),
@@ -317,7 +523,6 @@ catalogo_completo = {
     "🏠 12. Vivienda Habitacional": ("12vivienda", "app_vivienda.py", permisos_usuario["vivienda"]),
 }
 
-# Filtrar únicamente los módulos autorizados para el usuario
 calculadoras_disponibles = {
     nombre: (carpeta, archivo)
     for nombre, (carpeta, archivo, autorizado) in catalogo_completo.items()
@@ -331,8 +536,6 @@ if st.session_state.calculadora_activa not in calculadoras_disponibles:
 # BARRA LATERAL DINÁMICA SEGÚN EL ESTADO (ORDEN VERIFICADO)
 # -------------------------------------------------------------
 if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
-    # --- VISTA DEL HUB PRINCIPAL (ORDEN: Logo -> Texto -> Avatar AV01 -> Navegación) ---
-
     logo_b64 = get_image_base64("00. Logo Georgeley.png")
     if logo_b64:
         st.sidebar.markdown(f"""
@@ -460,12 +663,11 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
         """)
 
     if not permisos_usuario["lci"]:
-        st.warning("🔒 **Modo LCI Base Activo:** Tu suscripción actual opera únicamente con el factor de **Ciudad de México (1.00)**. Actualiza a LCI Regionales o VIP en Skool para desbloquear todas las ciudades.")
+        st.warning("🔒 **Modo LCI Base Activo:** Tu suscripción actual opera únicamente con el factor de **Ciudad de México (1.00)**. Desbloquea todas las ciudades activando el plan VIP.")
 
     st.info("👈 **Para comenzar, elige un módulo habilitado (✅) en la barra lateral izquierda.**")
 
 else:
-    # --- EJECUCIÓN DEL MÓDULO ACTIVO ---
     carpeta, archivo = calculadoras_disponibles[st.session_state.calculadora_activa]
     ruta_modulo_dir = os.path.join(ROOT_DIR, "modulos", carpeta)
     ruta_script = os.path.join(ruta_modulo_dir, archivo)
