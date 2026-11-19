@@ -17,23 +17,47 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Ancho de barra lateral solo en pantallas amplias (escritorio / laptop) */
-    @media (min-width: 1025px) {
+    @media (min-width: 1025px) and (min-height: 551px) {
         [data-testid="stSidebar"] {
             min-width: 350px !important;
             max-width: 380px !important;
         }
     }
 
-    /* Ajustes para celular y tablet (vertical y rotado en horizontal) */
-    @media (max-width: 1024px), (max-height: 520px) and (orientation: landscape) {
+    /* Celulares y tablets (vertical y rotado en horizontal) */
+    @media (max-width: 1024px), (max-height: 550px) and (orientation: landscape) {
+        [data-testid="stAppViewContainer"] {
+            flex-direction: row !important;
+            overflow-x: hidden !important;
+        }
         [data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            width: 82vw !important;
             min-width: 0 !important;
-            max-width: 85vw !important;
+            max-width: 340px !important;
+            z-index: 999 !important;
+            overflow-y: auto !important;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.55) !important;
         }
         [data-testid="stSidebar"][aria-expanded="false"] {
             width: 0 !important;
             min-width: 0 !important;
             max-width: 0 !important;
+            transform: translateX(-100%) !important;
+            pointer-events: none !important;
+        }
+        section.main,
+        [data-testid="stMain"],
+        [data-testid="stAppViewContainer"] > section {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            overflow-x: hidden !important;
         }
         .main .block-container,
         [data-testid="stMainBlockContainer"],
@@ -41,16 +65,16 @@ st.markdown("""
             padding-left: 1rem !important;
             padding-right: 1rem !important;
             padding-top: 1rem !important;
+            width: 100% !important;
             max-width: 100% !important;
-            overflow-x: hidden !important;
         }
         h1 {
-            font-size: 1.5rem !important;
+            font-size: 1.45rem !important;
             line-height: 1.25 !important;
             word-wrap: break-word !important;
         }
         h2 {
-            font-size: 1.25rem !important;
+            font-size: 1.2rem !important;
         }
     }
 
