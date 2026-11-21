@@ -71,8 +71,10 @@ st.markdown("""
     }
 
     /* Botón de Demo Gratuito en morado con letras amarillas (#fbbf24), sin afectar el submit del form */
-    [data-testid="stMain"] div[data-testid="stButton"] > button,
-    [data-testid="stMain"] div[data-testid="stButton"] button {
+    .demo-btn-morado button,
+    .demo-btn-morado [data-testid="stBaseButton-secondary"],
+    .demo-btn-morado [data-testid="stBaseButton-primary"],
+    .demo-btn-morado div[data-testid="stButton"] > button {
         background: linear-gradient(135deg, #6D28D9 0%, #5B21B6 100%) !important;
         background-color: #6D28D9 !important;
         color: #fbbf24 !important;
@@ -83,8 +85,10 @@ st.markdown("""
         box-shadow: 0 4px 16px rgba(109, 40, 217, 0.45) !important;
         transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
     }
-    [data-testid="stMain"] div[data-testid="stButton"] > button:hover,
-    [data-testid="stMain"] div[data-testid="stButton"] button:hover {
+    .demo-btn-morado button:hover,
+    .demo-btn-morado [data-testid="stBaseButton-secondary"]:hover,
+    .demo-btn-morado [data-testid="stBaseButton-primary"]:hover,
+    .demo-btn-morado div[data-testid="stButton"] > button:hover {
         background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
         background-color: #7C3AED !important;
         color: #fde047 !important;
@@ -92,11 +96,60 @@ st.markdown("""
         transform: translateY(-1px) !important;
         box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6) !important;
     }
-    [data-testid="stMain"] div[data-testid="stButton"] button *,
-    [data-testid="stMain"] div[data-testid="stButton"] button p,
-    [data-testid="stMain"] div[data-testid="stButton"] button span {
+    .demo-btn-morado button *,
+    .demo-btn-morado button p,
+    .demo-btn-morado button span {
         color: #fbbf24 !important;
         font-weight: 800 !important;
+    }
+
+    /* Tarjetas introductorias opcionales de índices LCI y CSI */
+    .intro-box {
+        background: #181824;
+        border: 1px solid #2e2e42;
+        border-radius: 14px;
+        padding: 20px 22px;
+        margin-top: 12px;
+        margin-bottom: 16px;
+        color: #F1F5F9;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    }
+    .intro-card {
+        background: #12121c;
+        border: 1px solid #2b2b40;
+        border-left: 4px solid #7C3AED;
+        border-radius: 12px;
+        padding: 16px 18px;
+        height: 100%;
+    }
+    .intro-card-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #fbbf24;
+        margin: 0 0 8px 0;
+    }
+    .intro-card-text {
+        font-size: 0.9rem;
+        line-height: 1.48;
+        color: #E2E8F0;
+        margin: 0 0 10px 0;
+    }
+    .intro-card-plan {
+        font-size: 0.82rem;
+        line-height: 1.4;
+        color: #93c5fd;
+        margin: 0;
+    }
+    .intro-aviso {
+        background: rgba(251, 191, 36, 0.08);
+        border: 1px solid rgba(251, 191, 36, 0.35);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        margin-bottom: 14px;
+        font-size: 0.86rem;
+        line-height: 1.45;
+        color: #F8FAFC;
     }
 
     /* Catálogo de 12 calculadoras y tipologías */
@@ -437,6 +490,9 @@ if "usuario_autenticado" not in st.session_state:
 if "modo_demo" not in st.session_state:
     st.session_state.modo_demo = False
 
+if "intro_indices_completada" not in st.session_state:
+    st.session_state.intro_indices_completada = False
+
 if "calculadora_activa" not in st.session_state:
     st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
 
@@ -506,6 +562,105 @@ def aplicar_formato_csi_seguro():
     st.selectbox = envolver(sb_orig)
     st.sidebar.selectbox = envolver(sb_side_orig)
     return sb_orig, sb_side_orig
+
+def render_pantalla_intro_indices():
+    """Filtro opcional previo al Login para conocer los índices LCI y CSI o pasar directo al Hub Central."""
+    logo_b64 = get_image_base64("00. Logo Georgeley.png")
+    _, col_centro, _ = st.columns([0.8, 4.4, 0.8])
+
+    with col_centro:
+        if logo_b64:
+            st.markdown(f"""
+            <div style="display: flex; justify-content: center; margin-top: 10px; margin-bottom: 8px;">
+                <img src="data:image/png;base64,{logo_b64}" width="160">
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<h2 style='text-align: center; margin-bottom: 4px;'>🧭 Guía Rápida de Parametrización</h2>", unsafe_allow_html=True)
+        st.markdown(
+            "<p style='text-align: center; color: #94A3B8; font-size: 0.94rem; margin-bottom: 14px;'>"
+            "Ecosistema de Calculadoras Paramétricas Georgeley"
+            "</p>",
+            unsafe_allow_html=True,
+        )
+
+        with st.container(border=True):
+            st.markdown(
+                "**¿Es tu primera vez usando esta herramienta, deseas conocer más sobre los índices que utilizamos en la parametrización?**"
+            )
+            opcion_intro = st.radio(
+                "Selecciona una opción:",
+                options=[
+                    "Sí, mostrar introducción a los índices LCI y CSI",
+                    "No. Continuar al Acceso del Hub Central",
+                ],
+                index=0,
+                key="radio_intro_indices",
+            )
+
+            if opcion_intro == "No. Continuar al Acceso del Hub Central":
+                if st.button("Continuar al Acceso del Hub Central →", use_container_width=True, type="primary"):
+                    st.session_state.intro_indices_completada = True
+                    st.rerun()
+            else:
+                st.markdown(
+                    """
+                    <div class="intro-box">
+                        <p style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC; margin: 0 0 4px 0;">
+                            Índices de parametrización: LCI y CSI
+                        </p>
+                        <p style="font-size: 0.88rem; color: #CBD5E1; margin: 0 0 14px 0;">
+                            Conoce cómo refinan tus estimaciones y en qué planes de suscripción se habilitan.
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                col_lci, col_csi = st.columns(2, gap="medium")
+                with col_lci:
+                    st.markdown(
+                        """
+                        <div class="intro-card">
+                            <p class="intro-card-title">📍 Índice de Contexto Local (LCI)</p>
+                            <p class="intro-card-text">
+                                Ajusta los costos paramétricos a las condiciones de mercado, mano de obra, materiales y logística de distintas plazas y estados de México (tomando como referencia base <strong>Ciudad de México = 1.00</strong>).
+                            </p>
+                            <p class="intro-card-plan">
+                                <strong>Disponibilidad:</strong> Su habilitación regional depende del plan contratado (por ejemplo, planes con LCI activo como <strong>VIP</strong> o <strong>Acceso Total + LCI</strong>; en planes base opera fijo en <strong>Ciudad de México · Factor 1.00</strong>).
+                            </p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                with col_csi:
+                    st.markdown(
+                        """
+                        <div class="intro-card">
+                            <p class="intro-card-title">🏗️ Índice de Singularidad Constructiva (CSI)</p>
+                            <p class="intro-card-text">
+                                Refleja el grado de complejidad, especialización o particularidad constructiva de una obra frente a una configuración <strong>ESTÁNDAR (0%)</strong>, permitiendo ponderar condiciones técnicas fuera de lo convencional.
+                            </p>
+                            <p class="intro-card-plan">
+                                <strong>Disponibilidad:</strong> Su habilitación y alcance dependen de las condiciones y módulos incluidos en cada plan de suscripción.
+                            </p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                st.markdown(
+                    """
+                    <div class="intro-aviso">
+                        <strong>⚠️ Nota sobre planes y suscripciones:</strong> La activación y alcance de <strong>LCI</strong> y <strong>CSI</strong> no aplican por igual en todas las modalidades; solo se habilitan en determinados planes de suscripción.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                if st.button("Continuar al Acceso del Hub Central →", use_container_width=True, type="primary"):
+                    st.session_state.intro_indices_completada = True
+                    st.rerun()
 
 def render_listado_calculadoras_login():
     """Muestra las 12 calculadoras y el número de tipologías de cada una en el Hub principal (Login)."""
@@ -721,6 +876,10 @@ if st.session_state.usuario_autenticado is None and st.session_state.modo_demo:
 # CONTROL DE INICIO DE SESIÓN OBLIGATORIO (PANTALLA DE CAPTURA)
 # -------------------------------------------------------------
 if st.session_state.usuario_autenticado is None:
+    if not st.session_state.intro_indices_completada:
+        render_pantalla_intro_indices()
+        st.stop()
+
     logo_b64 = get_image_base64("00. Logo Georgeley.png")
     avatar_b64 = get_image_base64("Georgeley AV01.png")
 
@@ -759,9 +918,15 @@ if st.session_state.usuario_autenticado is None:
                         st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div class='demo-btn-morado'>", unsafe_allow_html=True)
         if st.button("🧪 Explorar Demo Gratuito (Sin Registro)", use_container_width=True):
             limpiar_estado_demo()
             st.session_state.modo_demo = True
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        if st.button("🧭 Ver guía de índices LCI y CSI", use_container_width=True):
+            st.session_state.intro_indices_completada = False
             st.rerun()
 
         if avatar_b64:
