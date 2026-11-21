@@ -6,9 +6,16 @@ import uuid
 import datetime
 import pandas as pd
 
+# -------------------------------------------------------------
+# CONTROL DE VERSIONES DEL ECOSISTEMA (SOLO INCREMENTO DECIMAL)
+# -------------------------------------------------------------
+VERSION_HUB = "V4.4"
+VERSION_LOGIN = "V4.2"
+VERSION_CALCULADORA = "V3.1"
+
 # 1. Configuración de la página principal del Hub Central
 st.set_page_config(
-    page_title="Hub Central - Ecosistema de Calculadoras Paramétricas Georgeley",
+    page_title=f"Hub Central {VERSION_HUB} - Ecosistema de Calculadoras Paramétricas Georgeley",
     page_icon="🏢",
     layout="wide"
 )
@@ -70,21 +77,21 @@ st.markdown("""
         }
     }
 
-    /* Botón de Demo Gratuito en morado (#6D28D9) con letras amarillas (#fbbf24), sin afectar el submit del form */
+    /* Botón de Demo Gratuito en morado oscuro (#2c1157) con letras amarillas (#fbbf24) */
     [data-testid="stMain"] div[data-testid="stButton"] > button,
     [data-testid="stMain"] div[data-testid="stButton"] button,
     .demo-btn-morado button,
     .demo-btn-morado [data-testid="stBaseButton-secondary"],
     .demo-btn-morado [data-testid="stBaseButton-primary"],
     .demo-btn-morado div[data-testid="stButton"] > button {
-        background: linear-gradient(135deg, #6D28D9 0%, #5B21B6 100%) !important;
-        background-color: #6D28D9 !important;
+        background: linear-gradient(135deg, #2c1157 0%, #1e0a3d 100%) !important;
+        background-color: #2c1157 !important;
         color: #fbbf24 !important;
         border: 2px solid #fbbf24 !important;
         border-radius: 12px !important;
         font-weight: 800 !important;
         font-size: 0.98rem !important;
-        box-shadow: 0 4px 16px rgba(109, 40, 217, 0.45) !important;
+        box-shadow: 0 4px 16px rgba(44, 17, 87, 0.55) !important;
         transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
     }
     [data-testid="stMain"] div[data-testid="stButton"] > button:hover,
@@ -93,12 +100,12 @@ st.markdown("""
     .demo-btn-morado [data-testid="stBaseButton-secondary"]:hover,
     .demo-btn-morado [data-testid="stBaseButton-primary"]:hover,
     .demo-btn-morado div[data-testid="stButton"] > button:hover {
-        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
-        background-color: #7C3AED !important;
+        background: linear-gradient(135deg, #3b1775 0%, #2c1157 100%) !important;
+        background-color: #3b1775 !important;
         color: #fde047 !important;
         border-color: #fde047 !important;
         transform: translateY(-1px) !important;
-        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6) !important;
+        box-shadow: 0 6px 20px rgba(59, 23, 117, 0.7) !important;
     }
     [data-testid="stMain"] div[data-testid="stButton"] button *,
     [data-testid="stMain"] div[data-testid="stButton"] button p,
@@ -124,7 +131,7 @@ st.markdown("""
     .intro-card {
         background: #12121c;
         border: 1px solid #2b2b40;
-        border-left: 4px solid #7C3AED;
+        border-left: 4px solid #2c1157;
         border-radius: 12px;
         padding: 16px 18px;
         height: 100%;
@@ -585,9 +592,9 @@ def render_pantalla_intro_indices_post_login():
 
         st.markdown("<h2 style='text-align: center; margin-bottom: 4px;'>🧭 Guía de Índices de Parametrización</h2>", unsafe_allow_html=True)
         st.markdown(
-            "<p style='text-align: center; color: #94A3B8; font-size: 0.94rem; margin-bottom: 14px;'>"
-            "Antes de pasar al Hub Central"
-            "</p>",
+            f"<p style='text-align: center; color: #94A3B8; font-size: 0.94rem; margin-bottom: 14px;'>"
+            f"Antes de pasar al Hub Central · Hub {VERSION_HUB} · Calc {VERSION_CALCULADORA}"
+            f"</p>",
             unsafe_allow_html=True,
         )
 
@@ -710,7 +717,7 @@ def render_banner_catalogo_demo():
         f"""
         <div class="demo-catalogo-top">
             <div class="demo-catalogo-top-title">
-                🧮 Catálogo Completo Disponible ({TOTAL_CALCULADORAS} Calculadoras · {TOTAL_TIPOLOGIAS} Tipologías)
+                🧮 Catálogo Completo Disponible ({TOTAL_CALCULADORAS} Calculadoras · {TOTAL_TIPOLOGIAS} Tipologías) · Calc {VERSION_CALCULADORA} · Hub {VERSION_HUB}
             </div>
             <div class="demo-catalogo-pills">
                 {pills_html}
@@ -893,7 +900,12 @@ if st.session_state.usuario_autenticado is None:
             """, unsafe_allow_html=True)
 
         st.markdown("<h2 style='text-align: center; margin-bottom: 4px;'>🔐 Acceso al Hub Central</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #94A3B8; font-size: 0.92rem;'>Ecosistema de Calculadoras Paramétricas Georgeley</p>", unsafe_allow_html=True)
+        st.markdown(
+            f"<p style='text-align: center; color: #94A3B8; font-size: 0.92rem;'>"
+            f"Ecosistema de Calculadoras Paramétricas Georgeley · Login {VERSION_LOGIN}"
+            f"</p>",
+            unsafe_allow_html=True,
+        )
 
         with st.form("form_login_hub"):
             correo_input = st.text_input("Correo Electrónico Registrado:", placeholder="tu.correo@ejemplo.com")
@@ -921,12 +933,10 @@ if st.session_state.usuario_autenticado is None:
                         st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<div class='demo-btn-morado'>", unsafe_allow_html=True)
         if st.button("🧪 Explorar Demo Gratuito (Sin Registro)", use_container_width=True):
             limpiar_estado_demo()
             st.session_state.modo_demo = True
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
 
         if avatar_b64:
             st.markdown(f"""
@@ -1066,7 +1076,8 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
         f"👤 **{usuario_actual['correo']}**\n\n"
         f"📋 Plan: **{usuario_actual['tipo_plan']}** ({sesiones_en_uso}/{usuario_actual['max_usuarios']} sesiones)\n\n"
         f"📅 Vence: **{usuario_actual['fecha_vencimiento']}** ({usuario_actual['dias_restantes']} días)\n\n"
-        f"{etiqueta_lci}"
+        f"{etiqueta_lci}\n\n"
+        f"🔖 Hub {VERSION_HUB} · Login {VERSION_LOGIN} · Calc {VERSION_CALCULADORA}"
     )
     if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
         liberar_sesion_actual()
@@ -1083,10 +1094,10 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
     with col_title:
         st.title("🚀 Hub Central: Ecosistema de Ingeniería de Costos")
     with col_ver:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: right; padding-top: 15px;">
             <span style="background-color: #1e3a8a; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                Hub v3.0
+                Hub {VERSION_HUB} · Calc {VERSION_CALCULADORA}
             </span>
         </div>
         """, unsafe_allow_html=True)
