@@ -70,10 +70,11 @@ st.markdown("""
         }
     }
 
-    /* Botón destacado del Demo Gratuito en morado con letras amarillas (#fbbf24) */
-    .demo-cta-wrapper button,
-    .demo-cta-wrapper [data-testid="stBaseButton-secondary"],
-    .demo-cta-wrapper [data-testid="stBaseButton-primary"] {
+    /* Botón destacado del Demo Gratuito: morado (#6D28D9) con letras amarillas (#fbbf24) */
+    .demo-btn-morado button,
+    .demo-btn-morado [data-testid="stBaseButton-secondary"],
+    .demo-btn-morado [data-testid="stBaseButton-primary"],
+    .demo-btn-morado div[data-testid="stButton"] > button {
         background: linear-gradient(135deg, #6D28D9 0%, #5B21B6 100%) !important;
         background-color: #6D28D9 !important;
         color: #fbbf24 !important;
@@ -81,13 +82,13 @@ st.markdown("""
         border-radius: 12px !important;
         font-weight: 800 !important;
         font-size: 0.98rem !important;
-        letter-spacing: 0.2px !important;
         box-shadow: 0 4px 16px rgba(109, 40, 217, 0.45) !important;
         transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
     }
-    .demo-cta-wrapper button:hover,
-    .demo-cta-wrapper [data-testid="stBaseButton-secondary"]:hover,
-    .demo-cta-wrapper [data-testid="stBaseButton-primary"]:hover {
+    .demo-btn-morado button:hover,
+    .demo-btn-morado [data-testid="stBaseButton-secondary"]:hover,
+    .demo-btn-morado [data-testid="stBaseButton-primary"]:hover,
+    .demo-btn-morado div[data-testid="stButton"] > button:hover {
         background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
         background-color: #7C3AED !important;
         color: #fde047 !important;
@@ -95,8 +96,9 @@ st.markdown("""
         transform: translateY(-1px) !important;
         box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6) !important;
     }
-    .demo-cta-wrapper button *,
-    .demo-cta-wrapper button p {
+    .demo-btn-morado button *,
+    .demo-btn-morado button p,
+    .demo-btn-morado button span {
         color: #fbbf24 !important;
         font-weight: 800 !important;
     }
@@ -480,55 +482,29 @@ def limpiar_estado_calculadora():
         if k in st.session_state:
             del st.session_state[k]
 
-# -------------------------------------------------------------
-# ADAPTADOR DE ETIQUETA CSI ("NULA (0%)" -> "ESTÁNDAR (0%)")
-# -------------------------------------------------------------
-ETIQUETA_CSI_ACTIVA = "ESTÁNDAR (0%)"
+def _formatear_csi_label(opcion):
+    if str(opcion).strip().upper() == "NULA (0%)":
+        return "ESTÁNDAR (0%)"
+    return str(opcion)
 
-def _es_opcion_csi_nula(valor):
-    texto = str(valor).strip().upper()
-    return texto in ("NULA (0%)", "NULA", "ESTÁNDAR (0%)", "ESTANDAR (0%)")
-
-def _normalizar_csi_a_original(valor):
-    if _es_opcion_csi_nula(valor):
-        return "NULA (0%)"
-    return valor
-
-def _etiquetar_csi_para_ui(valor):
-    if _es_opcion_csi_nula(valor):
-        return ETIQUETA_CSI_ACTIVA
-    return valor
-
-def aplicar_parche_csi_selectboxes():
-    """Adapta visualmente 'NULA (0%)' a 'ESTÁNDAR (0%)' en selectboxes de CSI."""
+def aplicar_formato_csi_seguro():
+    """Muestra 'ESTÁNDAR (0%)' en el selector de CSI mediante format_func sin alterar valores ni estados."""
     sb_orig = st.selectbox
     sb_side_orig = st.sidebar.selectbox
 
     def envolver(fn):
         def wrapper(label, options, *args, **kwargs):
-            lbl_low = str(label).lower()
-            opts_list = list(options) if options is not None else []
-            tiene_csi = any(_es_opcion_csi_nula(o) for o in opts_list) or any(
-                k in lbl_low for k in ("singularidad", "csi", "complejidad")
-            )
-            if not tiene_csi or not opts_list:
-                return fn(label, options, *args, **kwargs)
-
-            mapa_display_a_orig = {}
-            opciones_ui = []
-            for opt in opts_list:
-                etiqueta_ui = _etiquetar_csi_para_ui(opt)
-                opciones_ui.append(etiqueta_ui)
-                mapa_display_a_orig[etiqueta_ui] = opt
-
-            if "key" in kwargs and kwargs["key"] in st.session_state:
-                actual = st.session_state[kwargs["key"]]
-                etiqueta_actual = _etiquetar_csi_para_ui(actual)
-                if etiqueta_actual in opciones_ui:
-                    st.session_state[kwargs["key"]] = etiqueta_actual
-
-            seleccion_ui = fn(label, opciones_ui, *args, **kwargs)
-            return mapa_display_a_orig.get(seleccion_ui, _normalizar_csi_a_original(seleccion_ui))
+            try:
+                lbl_low = str(label).lower()
+                opts_list = list(options) if options is not None else []
+                es_csi = any(str(o).strip().upper() == "NULA (0%)" for o in opts_list) or (
+                    "singularidad" in lbl_low or "csi" in lbl_low
+                )
+                if es_csi and opts_list and "format_func" not in kwargs:
+                    kwargs["format_func"] = _formatear_csi_label
+            except Exception:
+                pass
+            return fn(label, options, *args, **kwargs)
         return wrapper
 
     st.selectbox = envolver(sb_orig)
@@ -560,9 +536,9 @@ def render_listado_calculadoras_login():
                 <span class="catalogo-resumen">{TOTAL_CALCULADORAS} Calculadoras · {TOTAL_TIPOLOGIAS} Tipologías en total</span>
             </div>
             <p class="catalogo-nota" style="margin: 0;">
-                • <strong>7 calculadoras individuales</strong> a elegir en planes Estándar y Premium.<br>
-                • <strong>4 calculadoras en Paquetes Dúo</strong> (Culturales, Deportivos, Escuelas y Educación, Hospitales y Salud) disponibles mediante paquete Dúo o Acceso Total / Corporativo.<br>
-                • <strong>1 calculadora bono</strong> (<em>Infraestructura Vial</em>, 2 tipologías) incluida gratis con cualquier suscripción.
+- <strong>7 calculadoras individuales</strong> a elegir en planes Estándar y Premium.<br>
+- <strong>4 calculadoras en Paquetes Dúo</strong> (Culturales, Deportivos, Escuelas y Educación, Hospitales y Salud) disponibles mediante paquete Dúo o Acceso Total / Corporativo.<br>
+- <strong>1 calculadora bono</strong> (<em>Infraestructura Vial</em>, 2 tipologías) incluida gratis con cualquier suscripción.
             </p>
         </div>
         """,
@@ -720,7 +696,7 @@ if st.session_state.usuario_autenticado is None and st.session_state.modo_demo:
         with open(ruta_demo_script, "r", encoding="utf-8") as f:
             codigo_demo = f.read()
 
-        sb_orig, sb_side_orig = aplicar_parche_csi_selectboxes()
+        sb_orig, sb_side_orig = aplicar_formato_csi_seguro()
         try:
             exec(codigo_demo, {"__name__": "__main__", "__file__": ruta_demo_script})
         finally:
@@ -787,7 +763,7 @@ if st.session_state.usuario_autenticado is None:
                         st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<div class='demo-cta-wrapper'>", unsafe_allow_html=True)
+        st.markdown("<div class='demo-btn-morado'>", unsafe_allow_html=True)
         if st.button("🧪 Explorar Demo Gratuito (Sin Registro)", use_container_width=True):
             limpiar_estado_demo()
             st.session_state.modo_demo = True
@@ -844,135 +820,3 @@ catalogo_completo = {
     "🏗️ 11. Urbanización y Obras": ("11urbanizacion", "app_urbanizacion.py", permisos_usuario["urbanizacion"]),
     "🏠 12. Vivienda Habitacional": ("12vivienda", "app_vivienda.py", permisos_usuario["vivienda"]),
 }
-
-calculadoras_disponibles = {
-    nombre: (carpeta, archivo)
-    for nombre, (carpeta, archivo, autorizado) in catalogo_completo.items()
-    if autorizado
-}
-
-if st.session_state.calculadora_activa not in calculadoras_disponibles:
-    st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
-
-# -------------------------------------------------------------
-# BARRA LATERAL DINÁMICA SEGÚN EL ESTADO (ORDEN VERIFICADO)
-# -------------------------------------------------------------
-if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
-    logo_b64 = get_image_base64("00. Logo Georgeley.png")
-    if logo_b64:
-        st.sidebar.markdown(f"""
-        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-            <img src="data:image/png;base64,{logo_b64}" width="190" style="display: block; margin: 0 auto;">
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.sidebar.markdown("<h3 style='text-align: center;'>🏢 <b>GEORGELEY</b></h3>", unsafe_allow_html=True)
-
-    st.sidebar.markdown("""
-    <div style="
-        position: relative;
-        background: #2D2B42;
-        border: 3px solid #111118;
-        border-radius: 18px;
-        padding: 14px 16px;
-        margin-top: 10px;
-        margin-bottom: 15px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
-        color: #FFFFFF;
-    ">
-        <p style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #FFFFFF;">👋 ¡Hola, bienvenido!</p>
-        <p style="margin: 0; font-size: 0.85rem; line-height: 1.4; color: #F1F5F9;">
-            Soy <b>Georgeley</b>. Selecciona cualquier módulo en el menú inferior para desplegarlo.
-        </p>
-        <div style="
-            position: absolute;
-            bottom: -14px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 14px solid #2D2B42;
-        "></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    avatar_b64 = get_image_base64("Georgeley AV01.png")
-    if avatar_b64:
-        st.sidebar.markdown(f"""
-        <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px; margin-bottom: 15px;">
-            <img src="data:image/png;base64,{avatar_b64}" width="190" style="display: block; margin: 0 auto;">
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.sidebar.divider()
-    st.sidebar.markdown("### 🎛️ Navegación del Hub")
-
-    seleccion_menu = st.sidebar.selectbox(
-        "Selecciona un módulo:",
-        list(calculadoras_disponibles.keys()),
-        index=list(calculadoras_disponibles.keys()).index(st.session_state.calculadora_activa)
-    )
-
-    if seleccion_menu != st.session_state.calculadora_activa:
-        limpiar_estado_calculadora()
-        st.session_state.calculadora_activa = seleccion_menu
-        st.rerun()
-
-    st.sidebar.divider()
-    etiqueta_lci = "✅ LCI Regionales Activo" if permisos_usuario["lci"] else "🔒 LCI: Solo CDMX (1.00)"
-    st.sidebar.caption(
-        f"👤 **{usuario_actual['correo']}**\n\n"
-        f"📋 Plan: **{usuario_actual['tipo_plan']}** ({sesiones_en_uso}/{usuario_actual['max_usuarios']} sesiones)\n\n"
-        f"📅 Vence: **{usuario_actual['fecha_vencimiento']}** ({usuario_actual['dias_restantes']} días)\n\n"
-        f"{etiqueta_lci}"
-    )
-    if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
-        liberar_sesion_actual()
-        st.session_state.usuario_autenticado = None
-        st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
-        st.rerun()
-
-# -------------------------------------------------------------
-# RENDERIZADO PRINCIPAL (HUB O MÓDULO ACTIVO)
-# -------------------------------------------------------------
-if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
-    col_title, col_ver = st.columns([4, 1])
-    with col_title:
-        st.title("🚀 Hub Central: Ecosistema de Ingeniería de Costos")
-    with col_ver:
-        st.markdown("""
-        <div style="text-align: right; padding-top: 15px;">
-            <span style="background-color: #1e3a8a; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                Hub v3.0
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("Bienvenido al centro de control maestro de tus modelos paramétricos. Selecciona una opción en el menú de la barra lateral para desplegar la herramienta deseada.")
-    st.divider()
-
-    st.markdown("### 🌟 Módulos Activos en tu Suscripción")
-
-    def marca_estado(nombre_menu):
-        return "✅" if nombre_menu in calculadoras_disponibles else "🔒"
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(f"""
-        #### 🏢 Edificación Vertical
-- {marca_estado("🏢 01. Departamentos")} Departamentos
-- {marca_estado("🏢 10. Oficinas y Corporativos")} Oficinas y Corporativos
-- {marca_estado("🏨 08. Hoteles y Hospedaje")} Hoteles y Hospedaje
-- {marca_estado("🏥 07. Hospitales y Salud")} Hospitales y Salud
-        """)
-    with col2:
-        st.markdown(f"""
-        #### 🏛️ Espacios Públicos y Sociales
-- {marca_estado("🛒 03. Comercios y Locales")} Comercios y Locales
-- {marca_estado("🏫 06. Escuelas y Educación")} Escuelas y Educación
-- {marca_estado("🏛️ 04. Culturales")} Culturales y Recreativos
-- {marca_estado("⚽ 05. Deportivos")} Deportivos
-- {marca_estado("🏭 02. Bodegas y Naves")} Bodegas y Naves Industriales
-        """)
