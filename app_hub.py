@@ -490,8 +490,8 @@ if "usuario_autenticado" not in st.session_state:
 if "modo_demo" not in st.session_state:
     st.session_state.modo_demo = False
 
-if "intro_indices_completada" not in st.session_state:
-    st.session_state.intro_indices_completada = False
+if "hub_indices_visto" not in st.session_state:
+    st.session_state.hub_indices_visto = False
 
 if "calculadora_activa" not in st.session_state:
     st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
@@ -563,8 +563,8 @@ def aplicar_formato_csi_seguro():
     st.sidebar.selectbox = envolver(sb_side_orig)
     return sb_orig, sb_side_orig
 
-def render_pantalla_intro_indices():
-    """Filtro opcional previo al Login para conocer los índices LCI y CSI o pasar directo al Hub Central."""
+def render_pantalla_intro_indices_post_login():
+    """Pantalla opcional tras iniciar sesión y antes de entrar al Hub Central."""
     logo_b64 = get_image_base64("00. Logo Georgeley.png")
     _, col_centro, _ = st.columns([0.8, 4.4, 0.8])
 
@@ -576,10 +576,10 @@ def render_pantalla_intro_indices():
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("<h2 style='text-align: center; margin-bottom: 4px;'>🧭 Guía Rápida de Parametrización</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; margin-bottom: 4px;'>🧭 Guía de Índices de Parametrización</h2>", unsafe_allow_html=True)
         st.markdown(
             "<p style='text-align: center; color: #94A3B8; font-size: 0.94rem; margin-bottom: 14px;'>"
-            "Ecosistema de Calculadoras Paramétricas Georgeley"
+            "Antes de pasar al Hub Central"
             "</p>",
             unsafe_allow_html=True,
         )
@@ -595,12 +595,12 @@ def render_pantalla_intro_indices():
                     "No. Continuar al Acceso del Hub Central",
                 ],
                 index=0,
-                key="radio_intro_indices",
+                key="radio_intro_indices_post_login",
             )
 
             if opcion_intro == "No. Continuar al Acceso del Hub Central":
-                if st.button("Continuar al Acceso del Hub Central →", use_container_width=True, type="primary"):
-                    st.session_state.intro_indices_completada = True
+                if st.button("Continuar al Hub Central →", use_container_width=True, type="primary"):
+                    st.session_state.hub_indices_visto = True
                     st.rerun()
             else:
                 st.markdown(
@@ -658,8 +658,8 @@ def render_pantalla_intro_indices():
                     unsafe_allow_html=True,
                 )
 
-                if st.button("Continuar al Acceso del Hub Central →", use_container_width=True, type="primary"):
-                    st.session_state.intro_indices_completada = True
+                if st.button("Continuar al Hub Central →", use_container_width=True, type="primary"):
+                    st.session_state.hub_indices_visto = True
                     st.rerun()
 
 def render_listado_calculadoras_login():
@@ -873,13 +873,9 @@ if st.session_state.usuario_autenticado is None and st.session_state.modo_demo:
     st.stop()
 
 # -------------------------------------------------------------
-# CONTROL DE INICIO DE SESIÓN OBLIGATORIO (PANTALLA DE CAPTURA)
+# CONTROL DE INICIO DE SESIÓN OBLIGATORIO (PANTALLA DE BIENVENIDA)
 # -------------------------------------------------------------
 if st.session_state.usuario_autenticado is None:
-    if not st.session_state.intro_indices_completada:
-        render_pantalla_intro_indices()
-        st.stop()
-
     logo_b64 = get_image_base64("00. Logo Georgeley.png")
     avatar_b64 = get_image_base64("Georgeley AV01.png")
 
@@ -914,6 +910,7 @@ if st.session_state.usuario_autenticado is None:
                         )
                     else:
                         st.session_state.modo_demo = False
+                        st.session_state.hub_indices_visto = False
                         st.session_state.usuario_autenticado = datos_usr
                         st.rerun()
 
@@ -924,10 +921,6 @@ if st.session_state.usuario_autenticado is None:
             st.session_state.modo_demo = True
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
-
-        if st.button("🧭 Ver guía de índices LCI y CSI", use_container_width=True):
-            st.session_state.intro_indices_completada = False
-            st.rerun()
 
         if avatar_b64:
             st.markdown(f"""
@@ -957,7 +950,13 @@ permitido_continuar, sesiones_en_uso = registrar_o_validar_sesion(
 )
 if not permitido_continuar:
     st.session_state.usuario_autenticado = None
+    st.session_state.hub_indices_visto = False
     st.rerun()
+
+# Pantalla opcional de índices LCI y CSI tras loguearse y antes de entrar al Hub Central
+if not st.session_state.hub_indices_visto:
+    render_pantalla_intro_indices_post_login()
+    st.stop()
 
 permisos_usuario = usuario_actual["permisos"]
 
@@ -1066,6 +1065,7 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
     if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
         liberar_sesion_actual()
         st.session_state.usuario_autenticado = None
+        st.session_state.hub_indices_visto = False
         st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
         st.rerun()
 
@@ -1193,6 +1193,7 @@ else:
             liberar_sesion_actual()
             limpiar_estado_calculadora()
             st.session_state.usuario_autenticado = None
+            st.session_state.hub_indices_visto = False
             st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
             os.chdir(ROOT_DIR)
             st.rerun()
