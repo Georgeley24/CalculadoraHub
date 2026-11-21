@@ -14,8 +14,17 @@ st.set_page_config(
 )
 
 # Estilo CSS responsivo conservando siempre accesible el controlador del panel lateral
+# y asegurando contraste oscuro legible en cualquier modo del dispositivo
 st.markdown("""
 <style>
+    /* Base oscura consistente para evitar texto claro sobre fondo blanco */
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    section.main {
+        background-color: #0E1117 !important;
+        color: #F1F5F9 !important;
+    }
+
     /* Mantener siempre visible y accesible el botón para abrir/ocultar la barra lateral */
     [data-testid="stSidebarCollapseButton"],
     [data-testid="collapsedControl"],
@@ -59,6 +68,97 @@ st.markdown("""
         h2 {
             font-size: 1.2rem !important;
         }
+    }
+
+    /* Catálogo de 12 calculadoras y tipologías */
+    .catalogo-box {
+        background: #181824;
+        border: 1px solid #2e2e42;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-top: 12px;
+        margin-bottom: 16px;
+        color: #F1F5F9;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    }
+    .catalogo-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #2e2e42;
+    }
+    .catalogo-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #F8FAFC;
+        margin: 0;
+    }
+    .catalogo-resumen {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #fbbf24;
+    }
+    .catalogo-item {
+        background: #12121c;
+        border: 1px solid #262638;
+        border-radius: 10px;
+        padding: 9px 12px;
+        margin-bottom: 8px;
+        font-size: 0.86rem;
+        line-height: 1.35;
+        color: #E2E8F0;
+    }
+    .catalogo-tipologias {
+        display: block;
+        font-size: 0.8rem;
+        color: #93c5fd;
+        margin-top: 3px;
+        font-weight: 600;
+    }
+    .catalogo-nota {
+        font-size: 0.8rem;
+        color: #CBD5E1;
+        margin-top: 8px;
+        line-height: 1.4;
+    }
+
+    /* Banner superior fijo en el panel de resultados del Demo */
+    .demo-catalogo-top {
+        background: #181824;
+        border: 1px solid #334155;
+        border-left: 4px solid #3b82f6;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        color: #F1F5F9;
+    }
+    .demo-catalogo-top-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #F8FAFC;
+        margin: 0 0 6px 0;
+    }
+    .demo-catalogo-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+    .demo-pill {
+        background: #11131f;
+        border: 1px solid #2a3346;
+        color: #E2E8F0;
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 0.76rem;
+        line-height: 1.25;
+    }
+    .demo-pill strong {
+        color: #fbbf24;
     }
 
     .plan-card-wide {
@@ -173,6 +273,25 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Asegurar siempre el directorio raíz al iniciar el script
 os.chdir(ROOT_DIR)
+
+# Catálogo oficial de las 12 calculadoras y sus tipologías
+CATALOGO_CALCULADORAS = [
+    {"num": "01", "icono": "🏢", "nombre": "Departamentos", "tipologias": 7, "modalidad": "Individual", "detalle": "7 tipologías"},
+    {"num": "02", "icono": "🏭", "nombre": "Bodegas y Naves", "tipologias": 6, "modalidad": "Individual", "detalle": "6 tipologías"},
+    {"num": "03", "icono": "🛒", "nombre": "Comercios y Locales", "tipologias": 14, "modalidad": "Individual", "detalle": "14 tipologías"},
+    {"num": "04", "icono": "🏛️", "nombre": "Culturales", "tipologias": 5, "modalidad": "Paquete Dúo", "detalle": "5 tipologías · exclusivo paq. Dúo"},
+    {"num": "05", "icono": "⚽", "nombre": "Deportivos", "tipologias": 5, "modalidad": "Paquete Dúo", "detalle": "5 tipologías · exclusivo paq. Dúo"},
+    {"num": "06", "icono": "🏫", "nombre": "Escuelas y Educación", "tipologias": 4, "modalidad": "Paquete Dúo", "detalle": "4 tipologías · exclusivo paq. Dúo"},
+    {"num": "07", "icono": "🏥", "nombre": "Hospitales y Salud", "tipologias": 4, "modalidad": "Paquete Dúo", "detalle": "4 tipologías · exclusivo paq. Dúo"},
+    {"num": "08", "icono": "🏨", "nombre": "Hoteles y Hospedaje", "tipologias": 7, "modalidad": "Individual", "detalle": "7 tipologías"},
+    {"num": "09", "icono": "🛣️", "nombre": "Infraestructura Vial", "tipologias": 2, "modalidad": "Bono", "detalle": "2 tipologías · gratis con cualquier suscripción"},
+    {"num": "10", "icono": "🏢", "nombre": "Oficinas y Corporativos", "tipologias": 10, "modalidad": "Individual", "detalle": "10 tipologías"},
+    {"num": "11", "icono": "🏗️", "nombre": "Urbanización y Obras", "tipologias": 12, "modalidad": "Individual", "detalle": "12 tipologías"},
+    {"num": "12", "icono": "🏠", "nombre": "Vivienda Habitacional", "tipologias": 7, "modalidad": "Individual", "detalle": "7 tipologías"},
+]
+
+TOTAL_CALCULADORAS = len(CATALOGO_CALCULADORAS)
+TOTAL_TIPOLOGIAS = sum(item["tipologias"] for item in CATALOGO_CALCULADORAS)
 
 # Catálogo comercial con Payment Links oficiales de Stripe
 PLANES_ECOSISTEMA = [
@@ -330,6 +449,60 @@ def limpiar_estado_calculadora():
         if k in st.session_state:
             del st.session_state[k]
 
+def render_listado_calculadoras_login():
+    """Muestra las 12 calculadoras y el número de tipologías de cada una en el Hub principal (Login)."""
+    items_html = []
+    for item in CATALOGO_CALCULADORAS:
+        items_html.append(
+            f"<div class='catalogo-item'>"
+            f"<strong>{item['icono']} {item['num']}. {item['nombre']}</strong>"
+            f"<span class='catalogo-tipologias'>({item['detalle']})</span>"
+            f"</div>"
+        )
+
+    col_a, col_b, col_c = st.columns(3)
+    for idx, html_card in enumerate(items_html):
+        target_col = [col_a, col_b, col_c][idx % 3]
+        with target_col:
+            st.markdown(html_card, unsafe_allow_html=True)
+
+    st.markdown(
+        f"""
+        <div class="catalogo-box" style="margin-top: 8px; margin-bottom: 14px;">
+            <div class="catalogo-header">
+                <p class="catalogo-title">🧮 Catálogo Completo del Ecosistema</p>
+                <span class="catalogo-resumen">{TOTAL_CALCULADORAS} Calculadoras · {TOTAL_TIPOLOGIAS} Tipologías en total</span>
+            </div>
+            <p class="catalogo-nota" style="margin: 0;">
+                • <strong>7 calculadoras individuales</strong> a elegir en planes Estándar y Premium.<br>
+                • <strong>4 calculadoras en Paquetes Dúo</strong> (Culturales, Deportivos, Escuelas y Educación, Hospitales y Salud) disponibles mediante paquete Dúo o Acceso Total / Corporativo.<br>
+                • <strong>1 calculadora bono</strong> (<em>Infraestructura Vial</em>, 2 tipologías) incluida gratis con cualquier suscripción.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_banner_catalogo_demo():
+    """Muestra un resumen visible en la parte superior del panel principal del Demo."""
+    pills_html = "".join([
+        f"<div class='demo-pill'><strong>{c['icono']} {c['num']}. {c['nombre']}:</strong> {c['detalle']}</div>"
+        for c in CATALOGO_CALCULADORAS
+    ])
+    st.markdown(
+        f"""
+        <div class="demo-catalogo-top">
+            <div class="demo-catalogo-top-title">
+                🧮 Catálogo Completo Disponible ({TOTAL_CALCULADORAS} Calculadoras · {TOTAL_TIPOLOGIAS} Tipologías)
+            </div>
+            <div class="demo-catalogo-pills">
+                {pills_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 def render_tarjeta_plan_apilada(plan):
     """Renderiza un paquete en formato ancho y apilado verticalmente."""
     items_html = "".join([f"<li>✅ {b}</li>" for b in plan["beneficios"]])
@@ -455,6 +628,8 @@ if st.session_state.usuario_autenticado is None and st.session_state.modo_demo:
     ruta_demo_script = os.path.join(ruta_demo_dir, "app_demo.py")
 
     if os.path.exists(ruta_demo_script):
+        render_banner_catalogo_demo()
+
         os.chdir(ruta_demo_dir)
         with open(ruta_demo_script, "r", encoding="utf-8") as f:
             codigo_demo = f.read()
@@ -536,6 +711,11 @@ if st.session_state.usuario_autenticado is None:
             """, unsafe_allow_html=True)
 
         st.info("💡 ¿Aún no tienes licencia activa? Prueba el **Demo** o despliega aquí abajo las opciones de suscripción.")
+
+    # Listado completo de las 12 calculadoras y tipologías justo antes del desplegable de suscripciones
+    _, col_catalogo, _ = st.columns([0.4, 9.2, 0.4])
+    with col_catalogo:
+        render_listado_calculadoras_login()
 
     # Desplegable a ancho completo fuera de la columna central angosta
     _, col_planes, _ = st.columns([0.4, 9.2, 0.4])
