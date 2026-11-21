@@ -70,7 +70,9 @@ st.markdown("""
         }
     }
 
-    /* Botón de Demo Gratuito en morado con letras amarillas (#fbbf24), sin afectar el submit del form */
+    /* Botón de Demo Gratuito en morado (#6D28D9) con letras amarillas (#fbbf24), sin afectar el submit del form */
+    [data-testid="stMain"] div[data-testid="stButton"] > button,
+    [data-testid="stMain"] div[data-testid="stButton"] button,
     .demo-btn-morado button,
     .demo-btn-morado [data-testid="stBaseButton-secondary"],
     .demo-btn-morado [data-testid="stBaseButton-primary"],
@@ -85,6 +87,8 @@ st.markdown("""
         box-shadow: 0 4px 16px rgba(109, 40, 217, 0.45) !important;
         transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
     }
+    [data-testid="stMain"] div[data-testid="stButton"] > button:hover,
+    [data-testid="stMain"] div[data-testid="stButton"] button:hover,
     .demo-btn-morado button:hover,
     .demo-btn-morado [data-testid="stBaseButton-secondary"]:hover,
     .demo-btn-morado [data-testid="stBaseButton-primary"]:hover,
@@ -96,6 +100,9 @@ st.markdown("""
         transform: translateY(-1px) !important;
         box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6) !important;
     }
+    [data-testid="stMain"] div[data-testid="stButton"] button *,
+    [data-testid="stMain"] div[data-testid="stButton"] button p,
+    [data-testid="stMain"] div[data-testid="stButton"] button span,
     .demo-btn-morado button *,
     .demo-btn-morado button p,
     .demo-btn-morado button span {
