@@ -70,6 +70,37 @@ st.markdown("""
         }
     }
 
+    /* Botón destacado del Demo Gratuito en morado con letras amarillas (#fbbf24) */
+    .demo-cta-wrapper button,
+    .demo-cta-wrapper [data-testid="stBaseButton-secondary"],
+    .demo-cta-wrapper [data-testid="stBaseButton-primary"] {
+        background: linear-gradient(135deg, #6D28D9 0%, #5B21B6 100%) !important;
+        background-color: #6D28D9 !important;
+        color: #fbbf24 !important;
+        border: 2px solid #fbbf24 !important;
+        border-radius: 12px !important;
+        font-weight: 800 !important;
+        font-size: 0.98rem !important;
+        letter-spacing: 0.2px !important;
+        box-shadow: 0 4px 16px rgba(109, 40, 217, 0.45) !important;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+    }
+    .demo-cta-wrapper button:hover,
+    .demo-cta-wrapper [data-testid="stBaseButton-secondary"]:hover,
+    .demo-cta-wrapper [data-testid="stBaseButton-primary"]:hover {
+        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
+        background-color: #7C3AED !important;
+        color: #fde047 !important;
+        border-color: #fde047 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6) !important;
+    }
+    .demo-cta-wrapper button *,
+    .demo-cta-wrapper button p {
+        color: #fbbf24 !important;
+        font-weight: 800 !important;
+    }
+
     /* Catálogo de 12 calculadoras y tipologías */
     .catalogo-box {
         background: #181824;
@@ -449,6 +480,61 @@ def limpiar_estado_calculadora():
         if k in st.session_state:
             del st.session_state[k]
 
+# -------------------------------------------------------------
+# ADAPTADOR DE ETIQUETA CSI ("NULA (0%)" -> "ESTÁNDAR (0%)")
+# -------------------------------------------------------------
+ETIQUETA_CSI_ACTIVA = "ESTÁNDAR (0%)"
+
+def _es_opcion_csi_nula(valor):
+    texto = str(valor).strip().upper()
+    return texto in ("NULA (0%)", "NULA", "ESTÁNDAR (0%)", "ESTANDAR (0%)")
+
+def _normalizar_csi_a_original(valor):
+    if _es_opcion_csi_nula(valor):
+        return "NULA (0%)"
+    return valor
+
+def _etiquetar_csi_para_ui(valor):
+    if _es_opcion_csi_nula(valor):
+        return ETIQUETA_CSI_ACTIVA
+    return valor
+
+def aplicar_parche_csi_selectboxes():
+    """Adapta visualmente 'NULA (0%)' a 'ESTÁNDAR (0%)' en selectboxes de CSI."""
+    sb_orig = st.selectbox
+    sb_side_orig = st.sidebar.selectbox
+
+    def envolver(fn):
+        def wrapper(label, options, *args, **kwargs):
+            lbl_low = str(label).lower()
+            opts_list = list(options) if options is not None else []
+            tiene_csi = any(_es_opcion_csi_nula(o) for o in opts_list) or any(
+                k in lbl_low for k in ("singularidad", "csi", "complejidad")
+            )
+            if not tiene_csi or not opts_list:
+                return fn(label, options, *args, **kwargs)
+
+            mapa_display_a_orig = {}
+            opciones_ui = []
+            for opt in opts_list:
+                etiqueta_ui = _etiquetar_csi_para_ui(opt)
+                opciones_ui.append(etiqueta_ui)
+                mapa_display_a_orig[etiqueta_ui] = opt
+
+            if "key" in kwargs and kwargs["key"] in st.session_state:
+                actual = st.session_state[kwargs["key"]]
+                etiqueta_actual = _etiquetar_csi_para_ui(actual)
+                if etiqueta_actual in opciones_ui:
+                    st.session_state[kwargs["key"]] = etiqueta_actual
+
+            seleccion_ui = fn(label, opciones_ui, *args, **kwargs)
+            return mapa_display_a_orig.get(seleccion_ui, _normalizar_csi_a_original(seleccion_ui))
+        return wrapper
+
+    st.selectbox = envolver(sb_orig)
+    st.sidebar.selectbox = envolver(sb_side_orig)
+    return sb_orig, sb_side_orig
+
 def render_listado_calculadoras_login():
     """Muestra las 12 calculadoras y el número de tipologías de cada una en el Hub principal (Login)."""
     items_html = []
@@ -634,9 +720,12 @@ if st.session_state.usuario_autenticado is None and st.session_state.modo_demo:
         with open(ruta_demo_script, "r", encoding="utf-8") as f:
             codigo_demo = f.read()
 
+        sb_orig, sb_side_orig = aplicar_parche_csi_selectboxes()
         try:
             exec(codigo_demo, {"__name__": "__main__", "__file__": ruta_demo_script})
         finally:
+            st.selectbox = sb_orig
+            st.sidebar.selectbox = sb_side_orig
             os.chdir(ROOT_DIR)
 
         render_planes_en_sidebar_demo()
@@ -698,10 +787,12 @@ if st.session_state.usuario_autenticado is None:
                         st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div class='demo-cta-wrapper'>", unsafe_allow_html=True)
         if st.button("🧪 Explorar Demo Gratuito (Sin Registro)", use_container_width=True):
             limpiar_estado_demo()
             st.session_state.modo_demo = True
             st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
         if avatar_b64:
             st.markdown(f"""
@@ -885,92 +976,3 @@ if st.session_state.calculadora_activa == "📊 Selecciona una calculadora...":
 - {marca_estado("⚽ 05. Deportivos")} Deportivos
 - {marca_estado("🏭 02. Bodegas y Naves")} Bodegas y Naves Industriales
         """)
-    with col3:
-        st.markdown(f"""
-        #### 🛣️ Infraestructura y Vivienda
-- {marca_estado("🏠 12. Vivienda Habitacional")} Vivienda Habitacional
-- {marca_estado("🏗️ 11. Urbanización y Obras")} Urbanización y Loteos
-- {marca_estado("🛣️ 09. Infraestructura Vial")} Infraestructura Vial
-        """)
-
-    if not permisos_usuario["lci"]:
-        st.warning("🔒 **Modo LCI Base Activo:** Tu suscripción actual opera únicamente con el factor de **Ciudad de México (1.00)**. Desbloquea todas las ciudades activando el plan VIP.")
-
-    st.info("👈 **Para comenzar, elige un módulo habilitado (✅) en la barra lateral izquierda.**")
-
-else:
-    carpeta, archivo = calculadoras_disponibles[st.session_state.calculadora_activa]
-    ruta_modulo_dir = os.path.join(ROOT_DIR, "modulos", carpeta)
-    ruta_script = os.path.join(ruta_modulo_dir, archivo)
-
-    if os.path.exists(ruta_script):
-        os.chdir(ruta_modulo_dir)
-        with open(archivo, "r", encoding="utf-8") as f:
-            codigo_modulo = f.read()
-
-        selectbox_original = st.selectbox
-        sidebar_selectbox_original = st.sidebar.selectbox
-
-        def crear_selectbox_restringido(orig_fn):
-            def wrapper(label, options, *args, **kwargs):
-                lbl_low = str(label).lower()
-                opts_list = list(options) if options is not None else []
-                es_selector_lci = any(
-                    pal in lbl_low for pal in ("ciudad", "estado", "localidad", "ubicación", "ubicacion", "contexto", "lci", "región", "region", "plaza", "zona")
-                )
-                if es_selector_lci and opts_list:
-                    cdmx_opts = [
-                        o for o in opts_list
-                        if any(k in str(o).lower() for k in ("ciudad de méxico", "ciudad de mexico", "cdmx", "distrito federal"))
-                    ]
-                    opciones_filtradas = cdmx_opts if cdmx_opts else [opts_list[0]]
-                    kwargs["index"] = 0
-                    kwargs["help"] = "🔒 Suscripción sin LCI Regionales: bloqueado a Ciudad de México (Factor 1.00)."
-                    return orig_fn(label, opciones_filtradas, *args, **kwargs)
-                return orig_fn(label, options, *args, **kwargs)
-            return wrapper
-
-        if not permisos_usuario["lci"]:
-            st.selectbox = crear_selectbox_restringido(selectbox_original)
-            st.sidebar.selectbox = crear_selectbox_restringido(sidebar_selectbox_original)
-
-        try:
-            exec(codigo_modulo, {"__name__": "__main__", "__file__": ruta_script})
-        finally:
-            st.selectbox = selectbox_original
-            st.sidebar.selectbox = sidebar_selectbox_original
-
-        st.sidebar.divider()
-        st.sidebar.markdown("### 🎛️ Control de Navegación")
-
-        seleccion_menu = st.sidebar.selectbox(
-            "Cambiar de módulo:",
-            list(calculadoras_disponibles.keys()),
-            index=list(calculadoras_disponibles.keys()).index(st.session_state.calculadora_activa)
-        )
-
-        if seleccion_menu != st.session_state.calculadora_activa:
-            limpiar_estado_calculadora()
-            st.session_state.calculadora_activa = seleccion_menu
-            os.chdir(ROOT_DIR)
-            st.rerun()
-
-        if st.sidebar.button("🏠 Ir al Inicio del Hub", use_container_width=True, type="primary"):
-            limpiar_estado_calculadora()
-            st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
-            os.chdir(ROOT_DIR)
-            st.toast("⚠️ Se han reiniciado los parámetros y regresaste al Hub.", icon="🔄")
-            st.rerun()
-
-        if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
-            liberar_sesion_actual()
-            limpiar_estado_calculadora()
-            st.session_state.usuario_autenticado = None
-            st.session_state.calculadora_activa = "📊 Selecciona una calculadora..."
-            os.chdir(ROOT_DIR)
-            st.rerun()
-
-        os.chdir(ROOT_DIR)
-    else:
-        os.chdir(ROOT_DIR)
-        st.error(f"⚠️ No se encontró el archivo del módulo en la ruta exacta: `{ruta_script}`.")
