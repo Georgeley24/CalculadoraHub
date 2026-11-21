@@ -594,15 +594,11 @@ def render_pantalla_intro_indices_post_login():
                     "Sí, mostrar introducción a los índices LCI y CSI",
                     "No. Continuar al Acceso del Hub Central",
                 ],
-                index=0,
+                index=None,
                 key="radio_intro_indices_post_login",
             )
 
-            if opcion_intro == "No. Continuar al Acceso del Hub Central":
-                if st.button("Continuar al Hub Central →", use_container_width=True, type="primary"):
-                    st.session_state.hub_indices_visto = True
-                    st.rerun()
-            else:
+            if opcion_intro == "Sí, mostrar introducción a los índices LCI y CSI":
                 st.markdown(
                     """
                     <div class="intro-box">
@@ -658,6 +654,7 @@ def render_pantalla_intro_indices_post_login():
                     unsafe_allow_html=True,
                 )
 
+            if opcion_intro is not None:
                 if st.button("Continuar al Hub Central →", use_container_width=True, type="primary"):
                     st.session_state.hub_indices_visto = True
                     st.rerun()
@@ -911,6 +908,8 @@ if st.session_state.usuario_autenticado is None:
                     else:
                         st.session_state.modo_demo = False
                         st.session_state.hub_indices_visto = False
+                        if "radio_intro_indices_post_login" in st.session_state:
+                            del st.session_state["radio_intro_indices_post_login"]
                         st.session_state.usuario_autenticado = datos_usr
                         st.rerun()
 
